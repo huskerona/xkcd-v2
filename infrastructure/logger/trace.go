@@ -13,9 +13,11 @@ import (
 )
 
 var logWriter io.Writer
+var logFile string
 
 func init() {
 	logWriter = ioutil.Discard
+	logFile = fmt.Sprintf("%s/.xkcd/%s", util.GetHomeFolder(), appStr.LogFileName)
 }
 
 // Initializes the logger by defining the output file if useLog is true
@@ -26,8 +28,7 @@ func Initialize(useLog bool) {
 
 	var tempWriter io.Writer
 
-	logFile := fmt.Sprintf("%s/.xkcd/%s", util.GetHomeFolder(), appStr.LogFileName)
-	tempWriter, err := os.OpenFile(logFile, os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0755)
+	tempWriter, err := os.OpenFile(logFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
 
 	if err != nil {
 		log.Printf("trace initialize: %v", err)
