@@ -97,13 +97,6 @@ func Sort() {
 	sort.Sort(model.Comics)
 }
 
-// Validation checks if JSON and image exist in the collection.
-// It returns a slice of ValidationStatus struct that contains
-// errors for every item in the collection that is not consistent.
-func Validate() []model.ValidationStatus {
-	panic("Not implemented yet!")
-}
-
 //- Exports
 
 //+ Helper funcs

@@ -69,6 +69,13 @@ func ReadIndexFile() ([]*model.XKCD, error) {
 
 	decoder := gob.NewDecoder(file)
 
+	// An approach that was tried previously was to use:
+	// for decoder.Decode(&current) != io.EOF {
+	//     comics = append(comics, current)
+	// }
+	// However, for some reason the same item was being loaded as many times as there
+	// are XKCD comics. This way, current variable is being recreated on every loop iteration and
+	// it does the job.
 	for !loaded {
 		current := &model.XKCD{}
 

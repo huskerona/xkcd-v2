@@ -3,6 +3,7 @@ package model
 import (
 	//"sync"
 
+	"fmt"
 	"github.com/huskerona/xkcd2/infrastructure/logger"
 	"github.com/sasha-s/go-deadlock"
 )
@@ -54,6 +55,7 @@ func (c collection) Contains(comicNum int) bool {
 
 	index, _ := c.Get(comicNum)
 
+	logger.Info(fmt.Sprintf("%d exists: %t", comicNum, index > -1))
 	return index > -1
 }
 

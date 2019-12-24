@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/huskerona/xkcd2/infrastructure/model"
 	"log"
-	"os"
 	"sync"
 	"time"
 
@@ -15,9 +14,9 @@ import (
 )
 
 var logging = flag.Bool("log", false, "creates a log files")
-var verbose = flag.Bool("v", false, "verbose output")
 var stat = flag.Bool("stat", false, "show offline index stats")
 var dump = flag.Bool("dump", false, "output comic numbers, year, month and date (only with -stat)")
+var showDownloads = flag.Bool("sd", false, "show status of each comic as it is being downloaded")
 
 var wg sync.WaitGroup
 
@@ -38,7 +37,7 @@ func main() {
 	} else {
 		if *dump {
 			for _, item := range indexManager.GetComics() {
-				fmt.Fprintf(os.Stdout, "%d,%s,%s,%s\n",
+				_, _  = fmt.Printf("%d,%s,%s,%s\n",
 					(*item).Number, (*item).Year, (*item).Month, (*item).Day)
 				//fmt.Fprintf(os.Stdout, "%v\n", item)
 			}
@@ -49,10 +48,12 @@ func main() {
 }
 
 func doSync() {
-	//defer wg.Done()
 	lastComicNum := getLastComicNum()
 
-	go spinner()
+	if !*showDownloads {
+		go progressCounter()
+	}
+
 	synchronize(lastComicNum)
 
 	indexManager.Sort()
@@ -67,15 +68,12 @@ func synchronize(lastComicNum int) {
 	// to the DownloadComic function.
 	semaphore := make(chan struct{}, 20)
 
-	n := 0 // Terminates the loop which adds xkcd to the index file.
-
 	for i := 1; i < lastComicNum; i++ {
 		if indexManager.Contains(i) {
 			continue
 		}
 
 		wg.Add(1)
-		n++
 
 		go func(comicNum int) {
 			defer logger.Trace(fmt.Sprintf("synchronize go func(%d)", comicNum))()
@@ -88,37 +86,36 @@ func synchronize(lastComicNum int) {
 			semaphore <- struct{}{}
 			if xkcd, err = indexManager.DownloadComic(comicNum); err != nil {
 				hasError = true
+				// Without hasError variable here, any error that occurs would
+				// not remove the token from the semaphore if we just used return
 			}
 
 			if !hasError {
+				if *showDownloads {
+					fmt.Printf("Comic %d of %d\n", comicNum, lastComicNum)
+				}
 
 				ch <- xkcd
 			}
-			<-semaphore
-			n--
+			<-semaphore // release the token
 		}(i)
 	}
 
 	// Channel closer
 	go func() {
 		wg.Wait()
-
 		close(ch)
 	}()
 
-	// Previous implementation used for item := range ch to empty the channel and to
-	// add comics to the collection but the problem was that on some occasions the
-	// channel was not emptied fully. This sort of approach is described in
-	// The Go Programming Language, p.242
-	for n > 0 {
-		indexManager.AddToCollection(<-ch)
+	for item := range ch {
+		indexManager.AddToCollection(item)
 	}
 }
 
-func spinner() {
+func progressCounter() {
 	for {
 		for _, r := range `-\|/` {
-			fmt.Printf("Downloading... %c\r", r)
+			fmt.Printf("Downloading...%c\r", r)
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
