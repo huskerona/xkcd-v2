@@ -4,16 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"sync"
+	//"sync"
 
 	imageSvc "github.com/huskerona/xkcd2/image-service"
 	"github.com/huskerona/xkcd2/infrastructure"
 	"github.com/huskerona/xkcd2/infrastructure/logger"
 	"github.com/huskerona/xkcd2/infrastructure/model"
 	netManager "github.com/huskerona/xkcd2/net-manager"
+	"github.com/sasha-s/go-deadlock"
 )
 
-var mu sync.Mutex
+var mu deadlock.Mutex
 
 //+ Exports
 
@@ -30,7 +31,10 @@ func LoadComics(comics []*model.XKCD) {
 
 	mu.Lock()
 	defer mu.Unlock()
-	model.Comics = append(model.Comics, comics...)
+	for _, item := range comics {
+		model.Comics = append(model.Comics, item)
+	}
+
 }
 
 // Downloads the XKCD comic based on its number. If number is 0 it will
@@ -68,9 +72,6 @@ func DownloadComic(comicNumber int) (*model.XKCD, error) {
 func AddToCollection(xkcd *model.XKCD) {
 	defer logger.Trace(fmt.Sprintf("func AddToCollection(%d)", (*xkcd).Number))()
 
-	mu.Lock()
-	defer mu.Unlock()
-
 	model.Comics.Add(xkcd)
 }
 
@@ -85,6 +86,8 @@ func Contains(comicNumber int) bool {
 func Count() int {
 	defer logger.Trace("func Count()")()
 
+	mu.Lock()
+	defer mu.Unlock()
 	return len(model.Comics)
 }
 

@@ -58,3 +58,12 @@ func Trace(msg string) func() {
 		logWriter.Write([]byte(value))
 	}
 }
+
+func Info(msg string) {
+	if logWriter == nil {
+		return
+	}
+
+	value := fmt.Sprintf("[INF] [%s]: %s\n", time.Now().Format("15:04:56"), msg)
+	logWriter.Write([]byte(value))
+}

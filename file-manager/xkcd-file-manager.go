@@ -3,9 +3,9 @@ package file_manager
 import (
 	"encoding/gob"
 	"fmt"
+	"github.com/huskerona/xkcd2/infrastructure/logger"
 	"github.com/huskerona/xkcd2/infrastructure/model"
 	"github.com/huskerona/xkcd2/infrastructure/util"
-	"io"
 	"os"
 )
 
@@ -13,6 +13,8 @@ import (
 // Better approach would be to find what has been written before and append the new items.
 // (Will be done later)
 func WriteIndexFile(comics []*model.XKCD) error {
+	defer logger.Trace("WriteIndexFile")()
+
 	file, err := os.OpenFile(util.GetIndexFile(), os.O_CREATE|os.O_WRONLY, 0777)
 
 	if err != nil {
@@ -21,10 +23,17 @@ func WriteIndexFile(comics []*model.XKCD) error {
 
 	defer file.Close()
 
-	err = gob.NewEncoder(file).Encode(&comics)
+	encoder := gob.NewEncoder(file)
 
-	if err != nil {
-		return fmt.Errorf("gob encode: %v", err)
+	for _, current := range comics {
+		err = encoder.Encode(&current)
+
+		if err != nil {
+			return fmt.Errorf("gob encode: %v", err)
+		}
+
+		logger.Info(fmt.Sprintf("Encoding %d (%s-%s-%s)\n",
+			current.Number, current.Year, current.Month, current.Day))
 	}
 
 	return nil
@@ -32,6 +41,7 @@ func WriteIndexFile(comics []*model.XKCD) error {
 
 // Reads the index file and loads all the comics into a slice.
 func ReadIndexFile() ([]*model.XKCD, error) {
+	defer logger.Trace("ReadingIndexFile")()
 	file, err := os.OpenFile(util.GetIndexFile(), os.O_RDONLY, 0777)
 
 	if err != nil {
@@ -40,14 +50,27 @@ func ReadIndexFile() ([]*model.XKCD, error) {
 
 	defer file.Close()
 
+	logger.Info(fmt.Sprintf("ReadIndexFile file opened, decoding\n"))
+
+	loaded := false
 	var comics []*model.XKCD
-	var current *model.XKCD
 
 	decoder := gob.NewDecoder(file)
 
-	for decoder.Decode(current) != io.EOF {
-		comics = append(comics, current)
+	for !loaded {
+		current := &model.XKCD{}
+
+		if err := decoder.Decode(&current); err == nil {
+			comics = append(comics, current)
+
+			logger.Info(fmt.Sprintf("Decoding %d (%s-%s-%s)\n",
+				(*current).Number, (*current).Year, (*current).Month, (*current).Day))
+		} else {
+			loaded = true
+		}
 	}
+
+	logger.Info(fmt.Sprintf("ReadIndexFile completed with total of %d\n", len(comics)))
 
 	return comics, nil
 }

@@ -1,7 +1,10 @@
 package model
 
 import (
+	//"sync"
+
 	"github.com/huskerona/xkcd2/infrastructure/logger"
+	"github.com/sasha-s/go-deadlock"
 )
 
 //+ Type defs
@@ -23,6 +26,7 @@ type XKCD struct {
 }
 
 type collection []*XKCD
+var mu deadlock.Mutex
 
 //- Type defs
 
@@ -38,7 +42,9 @@ func (c collection) Add(xkcd *XKCD) {
 	defer logger.Trace("method Add()")()
 
 	if !c.Contains((*xkcd).Number) {
+		mu.Lock()
 		Comics = append(Comics, xkcd)
+		mu.Unlock()
 	}
 }
 
@@ -46,34 +52,35 @@ func (c collection) Add(xkcd *XKCD) {
 func (c collection) Contains(comicNum int) bool {
 	defer logger.Trace("method Contains()")()
 
-	xkcd := c.Get(comicNum)
+	index, _ := c.Get(comicNum)
 
-	return xkcd != nil
+	return index > -1
 }
 
-// Retrieves the comic from the collection. If there is no such comic, nil is returned.
-func (c collection) Get(comicNum int) *XKCD {
+// Retrieves the comic from the collection together with the index where the comic was found.
+//If there is no such comic, -1, nil are returned.
+func (c collection) Get(comicNum int) (int, *XKCD) {
 	defer logger.Trace("method Get()")()
 
-	for _, item := range c {
+	index := -1
+	var xkcd *XKCD
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	for i, item := range c {
 		if item.Number == comicNum {
-			return item
+			index, xkcd = i, item
+			break
 		}
 	}
 
-	return nil
+	return index, xkcd
 }
 
 // Finds an index of the comic based on the comic number. If nothing was found, -1 is returned.
 func (c collection) Index(comicNum int) int {
-	result := -1
-
-	for index, item := range c {
-		if item.Number == comicNum {
-			result = index
-			break
-		}
-	}
+	result, _ := c.Get(comicNum)
 
 	return result
 }
