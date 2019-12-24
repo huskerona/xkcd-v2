@@ -9,6 +9,12 @@ import (
 	"os"
 )
 
+func init() {
+	// Probably not the best place as init might fail. Will change.
+	if _, err := os.Stat(util.GetXkcdFolder()); err != nil {
+		os.Mkdir(util.GetXkcdFolder(), 0777)
+	}
+}
 // Writes comics into an index file. This process will recreate the file every time.
 // Better approach would be to find what has been written before and append the new items.
 // (Will be done later)
@@ -42,6 +48,7 @@ func WriteIndexFile(comics []*model.XKCD) error {
 // Reads the index file and loads all the comics into a slice.
 func ReadIndexFile() ([]*model.XKCD, error) {
 	defer logger.Trace("ReadingIndexFile")()
+
 	file, err := os.OpenFile(util.GetIndexFile(), os.O_RDONLY, 0777)
 
 	if err != nil {
