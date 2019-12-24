@@ -6,13 +6,18 @@ import (
 	"github.com/huskerona/xkcd2/infrastructure/logger"
 	"github.com/huskerona/xkcd2/infrastructure/model"
 	"github.com/huskerona/xkcd2/infrastructure/util"
+	"log"
 	"os"
 )
 
 func init() {
 	// Probably not the best place as the operation might fail in init. Will change.
 	if _, err := os.Stat(util.GetXkcdFolder()); err != nil {
-		os.Mkdir(util.GetXkcdFolder(), 0777)
+		err = os.Mkdir(util.GetXkcdFolder(), 0777)
+
+		if err != nil {
+			log.Println("Could not create .xkcd folder.")
+		}
 	}
 }
 // Writes comics into an index file. This process will recreate the file every time.
