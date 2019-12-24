@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	// Probably not the best place as the opeartion might fail in init. Will change.
+	// Probably not the best place as the operation might fail in init. Will change.
 	if _, err := os.Stat(util.GetXkcdFolder()); err != nil {
 		os.Mkdir(util.GetXkcdFolder(), 0777)
 	}
