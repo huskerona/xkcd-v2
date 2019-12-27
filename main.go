@@ -125,7 +125,6 @@ func fetchComics(lastComicNum int) {
 	// Channel closer
 	go func() {
 		wg.Wait()
-		close(comicChan)
 		done <- true
 	}()
 }
@@ -187,7 +186,12 @@ func monitor() {
 
 	for {
 		select {
-		case lastComicNum = <-lastComicChan:
+		case comicNum, ok := <-lastComicChan:
+			if ok {
+				lastComicNum = comicNum
+				close(lastComicChan)
+			}
+
 		case item := <-comicChan:
 			if item != nil {
 				logger.Info(fmt.Sprintf("Adding %d\n", (*item).Number))
@@ -204,9 +208,7 @@ func monitor() {
 		case complete := <-done:
 			if complete {
 				fmt.Println("Exiting...")
-				close(done)
-				close(lastComicChan)
-				close(duplicateCheckChan)
+				closeChannels()
 				return
 			}
 		}
@@ -219,4 +221,10 @@ func completed() bool {
 	done <- isDone
 
 	return isDone
+}
+
+func closeChannels() {
+	close(comicChan)
+	close(duplicateCheckChan)
+	close(done)
 }
