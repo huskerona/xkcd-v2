@@ -21,8 +21,6 @@ var mu deadlock.Mutex
 func GetComics() []*model.XKCD {
 	defer logger.Trace("func GetComics")()
 
-	mu.Lock()
-	defer mu.Unlock()
 	return model.Comics
 }
 
@@ -86,8 +84,6 @@ func Contains(comicNumber int) bool {
 func Count() int {
 	defer logger.Trace("func Count()")()
 
-	mu.Lock()
-	defer mu.Unlock()
 	return len(model.Comics)
 }
 

@@ -27,6 +27,7 @@ type XKCD struct {
 }
 
 type collection []*XKCD
+
 var mu deadlock.Mutex
 
 //- Type defs
@@ -42,11 +43,9 @@ var Comics collection
 func (c collection) Add(xkcd *XKCD) {
 	defer logger.Trace("method Add()")()
 
-	if !c.Contains((*xkcd).Number) {
-		mu.Lock()
-		Comics = append(Comics, xkcd)
-		mu.Unlock()
-	}
+	mu.Lock()
+	defer mu.Unlock()
+	Comics = append(Comics, xkcd)
 }
 
 // Determines whether a given comic is in the collection
@@ -95,7 +94,7 @@ func (c collection) Remove(index int) {
 		return
 	}
 
-	copy(Comics[index:], Comics[index+1:])
+	copy(c[index:], c[index+1:])
 }
 
 //++ Methods (sort interface)
