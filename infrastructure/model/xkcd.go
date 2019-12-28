@@ -1,11 +1,10 @@
 package model
 
 import (
-	//"sync"
+	"sync"
 
 	"fmt"
 	"github.com/huskerona/xkcd2/infrastructure/logger"
-	"github.com/sasha-s/go-deadlock"
 )
 
 //+ Type defs
@@ -28,7 +27,7 @@ type XKCD struct {
 
 type collection []*XKCD
 
-var mu deadlock.Mutex
+var mu sync.Mutex
 
 //- Type defs
 

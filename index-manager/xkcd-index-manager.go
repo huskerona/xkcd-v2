@@ -4,17 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	//"sync"
+	"sync"
 
 	imageSvc "github.com/huskerona/xkcd2/image-service"
 	"github.com/huskerona/xkcd2/infrastructure"
 	"github.com/huskerona/xkcd2/infrastructure/logger"
 	"github.com/huskerona/xkcd2/infrastructure/model"
 	netManager "github.com/huskerona/xkcd2/net-manager"
-	"github.com/sasha-s/go-deadlock"
 )
 
-var mu deadlock.Mutex
+var mu sync.Mutex
 
 //+ Exports
 
@@ -22,6 +21,19 @@ func GetComics() []*model.XKCD {
 	defer logger.Trace("func GetComics")()
 
 	return model.Comics
+}
+
+// Returns a comic based on the comic number, or nil if comic was not found.
+func GetComic(comicNum int) *model.XKCD {
+	defer logger.Trace(fmt.Sprintf("func GetComic(%d)", comicNum))()
+
+	index, comic := model.Comics.Get(comicNum)
+
+	if index == -1 {
+		return nil
+	}
+
+	return comic
 }
 
 func LoadComics(comics []*model.XKCD) {

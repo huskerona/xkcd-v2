@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	fileManager "github.com/huskerona/xkcd2/file-manager"
 	indexManager "github.com/huskerona/xkcd2/index-manager"
 	"github.com/huskerona/xkcd2/infrastructure/logger"
+	"github.com/huskerona/xkcd2/shared"
 )
 
 var (
@@ -52,7 +52,13 @@ func main() {
 
 	defer logger.Trace("main")()
 
-	loadComics()
+	comics, err := shared.LoadComics()
+
+	if err != nil {
+		log.Printf("xkcd2: %v\n", err)
+	} else {
+		indexManager.LoadComics(comics)
+	}
 
 	if !*stat {
 		start := time.Now()
@@ -85,7 +91,7 @@ func doSync() {
 	}
 
 	indexManager.Sort()
-	writeComics()
+	shared.WriteComics(indexManager.GetComics())
 }
 
 // fetchComics function does the actual hard work of downloading all the missing comics.
@@ -127,30 +133,6 @@ func fetchComics(lastComicNum int) {
 		wg.Wait()
 		done <- true
 	}()
-}
-
-// Loads the comics from the index file
-func loadComics() {
-	defer logger.Trace("loadComics")()
-
-	comics, err := fileManager.ReadIndexFile()
-
-	if err != nil {
-		log.Println(err)
-	}
-
-	if comics != nil {
-		indexManager.LoadComics(comics)
-	}
-}
-
-// Writes the comics back to the index file
-func writeComics() {
-	err := fileManager.WriteIndexFile(indexManager.GetComics())
-
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 // Retrieves the latest comic and passes the information to lastComicChan and comicChan channels.
