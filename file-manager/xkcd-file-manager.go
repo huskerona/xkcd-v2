@@ -3,23 +3,24 @@ package file_manager
 import (
 	"encoding/gob"
 	"fmt"
-	"github.com/huskerona/xkcd2/infrastructure/logger"
-	"github.com/huskerona/xkcd2/infrastructure/model"
-	"github.com/huskerona/xkcd2/infrastructure/util"
 	"log"
 	"os"
+	"xkcd2/infrastructure/logger"
+	"xkcd2/infrastructure/model"
+	"xkcd2/infrastructure/util"
 )
 
 func init() {
 	// Probably not the best place as the operation might fail in init. Will change.
 	if _, err := os.Stat(util.GetXkcdFolder()); err != nil {
-		err = os.Mkdir(util.GetXkcdFolder(), 0777)
+		err = os.Mkdir(util.GetXkcdFolder(), 0755)
 
 		if err != nil {
 			log.Println("Could not create .xkcd folder.")
 		}
 	}
 }
+
 // Writes comics into an index file. This process will recreate the file every time.
 // Better approach would be to find what has been written before and append the new items.
 // (Will be done later)

@@ -5,7 +5,7 @@ import (
 	"log"
 	"os/user"
 
-	appStrings "github.com/huskerona/xkcd2/infrastructure/app-strings"
+	appStrings "xkcd2/infrastructure/app-strings"
 )
 
 // Defines the home folder where XKCD will be written to.

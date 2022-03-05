@@ -4,17 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	//"sync"
+	"sync"
 
-	imageSvc "github.com/huskerona/xkcd2/image-service"
-	"github.com/huskerona/xkcd2/infrastructure"
-	"github.com/huskerona/xkcd2/infrastructure/logger"
-	"github.com/huskerona/xkcd2/infrastructure/model"
-	netManager "github.com/huskerona/xkcd2/net-manager"
-	"github.com/sasha-s/go-deadlock"
+	imageSvc "xkcd2/image-service"
+	"xkcd2/infrastructure"
+	"xkcd2/infrastructure/logger"
+	"xkcd2/infrastructure/model"
+	netManager "xkcd2/net-manager"
 )
 
-var mu deadlock.Mutex
+var mu sync.Mutex
 
 //+ Exports
 
@@ -102,17 +101,10 @@ func fetchLatestComic() (*model.XKCD, error) {
 	defer logger.Trace("func fetchLatestComic()")()
 
 	url := fmt.Sprintf("%s/%s", infrastructure.HomeURL, infrastructure.JSONURL)
-
-	rawJson, err := netManager.GetDataFromURL(url)
+	xkcd, err := fetch(url)
 
 	if err != nil {
-		return nil, err
-	}
-
-	// Read JSON from body as string
-	var xkcd *model.XKCD
-	if err := json.Unmarshal(rawJson, &xkcd); err != nil {
-		return nil, fmt.Errorf("unmarshall comic json: %v", err)
+		return nil, fmt.Errorf("fetchLatestComic: %v", err)
 	}
 
 	return xkcd, nil
@@ -123,16 +115,10 @@ func fetchComic(comicNumber int) (*model.XKCD, error) {
 	defer logger.Trace("fetch fetchComic()")()
 
 	url := fmt.Sprintf("%s/%d/%s", infrastructure.HomeURL, comicNumber, infrastructure.JSONURL)
-
-	rawJson, err := netManager.GetDataFromURL(url)
+	xkcd, err := fetch(url)
 
 	if err != nil {
-		return nil, err
-	}
-
-	var xkcd *model.XKCD
-	if err := json.Unmarshal(rawJson, &xkcd); err != nil {
-		return nil, fmt.Errorf("unmarshall comic json: %v", err)
+		return nil, fmt.Errorf("fetchComic: %v", err)
 	}
 
 	return xkcd, nil
@@ -143,6 +129,21 @@ func downloadImage(url string) ([]byte, error) {
 	defer logger.Trace("func downloadImage()")()
 
 	return netManager.GetDataFromURL(url)
+}
+
+func fetch(url string) (*model.XKCD, error) {
+	rawJson, err := netManager.GetDataFromURL(url)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var xkcd *model.XKCD
+	if err := json.Unmarshal(rawJson, &xkcd); err != nil {
+		return nil, fmt.Errorf("fetch: %v", err)
+	}
+
+	return xkcd, nil
 }
 
 //- Helper funcs

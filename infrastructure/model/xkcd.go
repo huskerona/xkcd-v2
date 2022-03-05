@@ -4,8 +4,8 @@ import (
 	//"sync"
 
 	"fmt"
-	"github.com/huskerona/xkcd2/infrastructure/logger"
-	"github.com/sasha-s/go-deadlock"
+	"sync"
+	"xkcd2/infrastructure/logger"
 )
 
 //+ Type defs
@@ -28,7 +28,7 @@ type XKCD struct {
 
 type collection []*XKCD
 
-var mu deadlock.Mutex
+var mu sync.Mutex
 
 //- Type defs
 

@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	appStr "github.com/huskerona/xkcd2/infrastructure/app-strings"
-	"github.com/huskerona/xkcd2/infrastructure/util"
+	appStr "xkcd2/infrastructure/app-strings"
+	"xkcd2/infrastructure/util"
 )
 
 var logWriter io.Writer
