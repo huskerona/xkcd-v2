@@ -52,7 +52,7 @@ func DownloadComic(comicNumber int) (*model.XKCD, error) {
 		return nil, err
 	}
 
-	imageByte, err := downloadImage((*xkcd).ImageURL)
+	imageByte, err := downloadImage(xkcd.ImageURL) // prev: (*xkcd).ImageURL
 
 	if err != nil {
 		// There are some comics whose image cannot be retrieved. It would require
@@ -60,7 +60,7 @@ func DownloadComic(comicNumber int) (*model.XKCD, error) {
 		return xkcd, nil
 	}
 
-	(*xkcd).Image = imageSvc.EncodeToBase64(imageByte)
+	xkcd.Image = imageSvc.EncodeToBase64(imageByte)
 
 	return xkcd, nil
 }
@@ -124,22 +124,28 @@ func fetchComic(comicNumber int) (*model.XKCD, error) {
 	return xkcd, nil
 }
 
-// Downloads an image found in the ImageURL field in XKCD struct.
-func downloadImage(url string) ([]byte, error) {
+// downloadImage fetches an image specified in imageUrl parameter.
+func downloadImage(imageUrl string) ([]byte, error) {
 	defer logger.Trace("func downloadImage()")()
 
-	return netManager.GetDataFromURL(url)
+	result, err := netManager.Get(imageUrl)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func fetch(url string) (*model.XKCD, error) {
-	rawJson, err := netManager.GetDataFromURL(url)
+	result, err := netManager.Get(url)
 
 	if err != nil {
 		return nil, err
 	}
 
 	var xkcd *model.XKCD
-	if err := json.Unmarshal(rawJson, &xkcd); err != nil {
+	if err := json.Unmarshal(result, &xkcd); err != nil {
 		return nil, fmt.Errorf("fetch: %v", err)
 	}
 
