@@ -1,4 +1,4 @@
-package index_manager
+package comic
 
 import (
 	"bytes"
@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
-	net_manager "xkcd2/net-manager"
-	"xkcd2/net-manager/mocks"
+	"xkcd2/webclient"
+	"xkcd2/webclient/mocks"
 )
 
 func setupClient(url string, forceError bool) *mocks.MockClient {
@@ -46,7 +46,7 @@ func setupClient(url string, forceError bool) *mocks.MockClient {
 
 func TestFetch(t *testing.T) {
 	url := "http://localhost/1/image.jpg"
-	net_manager.Client = setupClient(url, false)
+	webclient.Client = setupClient(url, false)
 
 	got, err := fetch("test-url")
 
@@ -65,7 +65,7 @@ func TestFetch(t *testing.T) {
 
 func TestFetchError(t *testing.T) {
 	url := "http://localhost/1/image.jpg"
-	net_manager.Client = setupClient(url, true)
+	webclient.Client = setupClient(url, true)
 
 	_, err := fetch("test-url")
 
@@ -75,10 +75,12 @@ func TestFetchError(t *testing.T) {
 }
 
 func TestDownloadComicLatest(t *testing.T) {
-	url := "http://localhost/1/image.jpg"
-	net_manager.Client = setupClient(url, false)
+	xkcd := XKCD{}
 
-	xkcd, err := DownloadComic(0)
+	url := "http://localhost/1/image.jpg"
+	webclient.Client = setupClient(url, false)
+
+	err := xkcd.Download(0)
 
 	if err != nil {
 		t.Errorf("expected err to be nil, got %v", err)

@@ -1,11 +1,11 @@
-package net_manager
+package webclient
 
 import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
 	"testing"
-	"xkcd2/net-manager/mocks"
+	"xkcd2/webclient/mocks"
 )
 
 func TestGetOK(t *testing.T) {

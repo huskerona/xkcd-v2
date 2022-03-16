@@ -1,4 +1,4 @@
-package net_manager
+package webclient
 
 import (
 	"fmt"

@@ -5,7 +5,7 @@ import (
 	"log"
 	"os/user"
 
-	appStrings "xkcd2/infrastructure/app-strings"
+	"xkcd2/config"
 )
 
 // Defines the home folder where XKCD will be written to.
@@ -30,5 +30,5 @@ func GetXkcdFolder() string {
 
 // Returns complete filename of the XKCD index file
 func GetIndexFile() string {
-	return fmt.Sprintf("%s/%s", GetXkcdFolder(), appStrings.IndexFile)
+	return fmt.Sprintf("%s/%s", GetXkcdFolder(), config.IndexFile)
 }

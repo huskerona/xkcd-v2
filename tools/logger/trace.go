@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	appStr "xkcd2/infrastructure/app-strings"
-	"xkcd2/infrastructure/util"
+	"xkcd2/config"
+	"xkcd2/tools/util"
 )
 
 var logWriter io.Writer
@@ -17,7 +17,7 @@ var logFile string
 
 func init() {
 	logWriter = ioutil.Discard
-	logFile = fmt.Sprintf("%s/.xkcd/%s", util.GetHomeFolder(), appStr.LogFileName)
+	logFile = fmt.Sprintf("%s/.xkcd/%s", util.GetHomeFolder(), config.LogFileName)
 }
 
 // Initializes the logger by defining the output file if useLog is true

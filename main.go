@@ -7,10 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"xkcd2/comic"
 	fileManager "xkcd2/file-manager"
-	indexManager "xkcd2/index-manager"
-	"xkcd2/infrastructure/logger"
-	"xkcd2/infrastructure/model"
+	"xkcd2/tools/logger"
 )
 
 var (
@@ -22,7 +21,7 @@ var (
 var (
 	wg            sync.WaitGroup
 	lastComicChan chan int         // last comic number found on the web site
-	comicChan     chan *model.XKCD // downloaded comic
+	comicChan     chan *comic.XKCD // downloaded comic
 	statusChan    <-chan time.Time // time to refresh the progress status
 )
 
@@ -38,22 +37,22 @@ func main() {
 		// no flag
 		start := time.Now()
 		doSync()
-		indexManager.Sort()
+		comic.Sort()
 		writeComics()
 
 		fmt.Printf("\nDONE in %s\n", time.Since(start))
-		fmt.Printf("\nTotal comics: %d\n", indexManager.Count())
+		fmt.Printf("\nTotal comics: %d\n", comic.Count())
 	} else {
 		// -s flag
 		if *dump {
 			// -d flag
-			for _, item := range indexManager.GetComics() {
+			for _, item := range comic.GetComics() {
 				fmt.Printf("%d,%s,%s,%s\n",
 					(*item).Number, (*item).Year, (*item).Month, (*item).Day)
 			}
 		}
 
-		fmt.Printf("\nIndex status: %d\n", indexManager.Count())
+		fmt.Printf("\nIndex status: %d\n", comic.Count())
 	}
 }
 
@@ -61,7 +60,7 @@ func main() {
 // sorting the comics and writing them back to the offline index file.
 func doSync() {
 	lastComicChan = make(chan int)
-	comicChan = make(chan *model.XKCD)
+	comicChan = make(chan *comic.XKCD)
 	statusChan = time.Tick(500 * time.Millisecond)
 
 	go monitor()
@@ -95,13 +94,13 @@ func fetchComics(lastComicNum int) {
 			defer logger.Trace(fmt.Sprintf("fetchComics go func(%d)", comicNum))()
 			defer wg.Done()
 
-			var xkcd *model.XKCD
+			xkcd := &comic.XKCD{}
 			var err error
 
 			semaphore <- struct{}{}
 			defer func() { <-semaphore }()
 
-			if xkcd, err = indexManager.DownloadComic(comicNum); err != nil {
+			if err = xkcd.Download(comicNum); err != nil {
 				return
 			}
 
@@ -121,13 +120,13 @@ func loadComics() {
 	}
 
 	if comics != nil {
-		indexManager.LoadComics(comics)
+		comic.LoadComics(comics)
 	}
 }
 
 // Writes the comics back to the index file
 func writeComics() {
-	err := fileManager.WriteIndexFile(indexManager.GetComics())
+	err := fileManager.WriteIndexFile(comic.GetComics())
 
 	if err != nil {
 		log.Fatal(err)
@@ -136,7 +135,8 @@ func writeComics() {
 
 // Retrieves the latest comic and passes the information to lastComicChan and comicChan channels.
 func getLastComicNum() int {
-	xkcd, err := indexManager.DownloadComic(0)
+	xkcd := &comic.XKCD{}
+	err := xkcd.Download(0)
 
 	if err != nil {
 		log.Fatal(err)
@@ -152,7 +152,7 @@ func getLastComicNum() int {
 // Checks if the comic exists by sending the information to
 // the monitor goroutine and receives the feedback on the dupCheckChan channel.
 func comicExists(comicNum int) bool {
-	return indexManager.Contains(comicNum)
+	return comic.Contains(comicNum)
 }
 
 // monitor function monitors the channels and does something with the
@@ -171,11 +171,11 @@ func monitor() {
 		case item := <-comicChan:
 			if item != nil {
 				logger.Info(fmt.Sprintf("Adding %d\n", (*item).Number))
-				indexManager.AddToCollection(item)
+				comic.AddToCollection(item)
 			}
 
 		case <-statusChan:
-			result := float64(indexManager.Count()) / float64(lastComicNum) * 100
+			result := float64(comic.Count()) / float64(lastComicNum) * 100
 			fmt.Printf("Downloading: %.2f%%\r", result)
 		}
 	}

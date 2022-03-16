@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"xkcd2/infrastructure/logger"
-	"xkcd2/infrastructure/model"
-	"xkcd2/infrastructure/util"
+	"xkcd2/comic"
+	"xkcd2/tools/logger"
+	"xkcd2/tools/util"
 )
 
 func init() {
@@ -24,7 +24,7 @@ func init() {
 // Writes comics into an index file. This process will recreate the file every time.
 // Better approach would be to find what has been written before and append the new items.
 // (Will be done later)
-func WriteIndexFile(comics []*model.XKCD) error {
+func WriteIndexFile(comics []*comic.XKCD) error {
 	defer logger.Trace("WriteIndexFile")()
 
 	file, err := os.OpenFile(util.GetIndexFile(), os.O_CREATE|os.O_WRONLY, 0777)
@@ -52,7 +52,7 @@ func WriteIndexFile(comics []*model.XKCD) error {
 }
 
 // Reads the index file and loads all the comics into a slice.
-func ReadIndexFile() ([]*model.XKCD, error) {
+func ReadIndexFile() ([]*comic.XKCD, error) {
 	defer logger.Trace("ReadingIndexFile")()
 
 	file, err := os.OpenFile(util.GetIndexFile(), os.O_RDONLY, 0777)
@@ -66,7 +66,7 @@ func ReadIndexFile() ([]*model.XKCD, error) {
 	logger.Info(fmt.Sprintf("ReadIndexFile file opened, decoding\n"))
 
 	loaded := false
-	var comics []*model.XKCD
+	var comics []*comic.XKCD
 
 	decoder := gob.NewDecoder(file)
 
@@ -78,7 +78,7 @@ func ReadIndexFile() ([]*model.XKCD, error) {
 	// are XKCD comics. This way, current variable is being recreated on every loop iteration and
 	// it does the job.
 	for !loaded {
-		current := &model.XKCD{}
+		current := &comic.XKCD{}
 
 		if err := decoder.Decode(&current); err == nil {
 			comics = append(comics, current)

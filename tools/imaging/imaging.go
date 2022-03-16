@@ -1,4 +1,4 @@
-package image_service
+package imaging
 
 import "encoding/base64"
 
