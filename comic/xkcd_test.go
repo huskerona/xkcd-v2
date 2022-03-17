@@ -45,6 +45,9 @@ func setupClient(url string, forceError bool) *mocks.MockClient {
 }
 
 func TestFetch(t *testing.T) {
+	saved := webclient.Client
+	defer func() { webclient.Client = saved }()
+
 	url := "http://localhost/1/image.jpg"
 	webclient.Client = setupClient(url, false)
 
@@ -64,6 +67,9 @@ func TestFetch(t *testing.T) {
 }
 
 func TestFetchError(t *testing.T) {
+	saved := webclient.Client
+	defer func() { webclient.Client = saved }()
+
 	url := "http://localhost/1/image.jpg"
 	webclient.Client = setupClient(url, true)
 
@@ -75,7 +81,10 @@ func TestFetchError(t *testing.T) {
 }
 
 func TestDownloadComicLatest(t *testing.T) {
-	xkcd := XKCD{}
+	saved := webclient.Client
+	defer func() { webclient.Client = saved }()
+
+	xkcd := &XKCD{}
 
 	url := "http://localhost/1/image.jpg"
 	webclient.Client = setupClient(url, false)
@@ -86,11 +95,7 @@ func TestDownloadComicLatest(t *testing.T) {
 		t.Errorf("expected err to be nil, got %v", err)
 	}
 
-	if xkcd.Image == "" {
-		t.Error("expected xkcd.Image to contain value, got empty string")
+	if xkcd.Number != 1 {
+		t.Errorf("expected xkcd.Number to be 1, got %d", xkcd.Number)
 	}
-}
-
-func TestDownloadComicOlder(t *testing.T) {
-
 }

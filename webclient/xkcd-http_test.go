@@ -9,6 +9,9 @@ import (
 )
 
 func TestGetOK(t *testing.T) {
+	saved := Client
+	defer func() { Client = saved }()
+
 	want := "This is a test"
 	Client = &mocks.MockClient{}
 	mocks.GetDoFunc = func(req *http.Request) (*http.Response, error) {
@@ -35,6 +38,9 @@ func TestGetOK(t *testing.T) {
 }
 
 func TestGetBadRequest(t *testing.T) {
+	saved := Client
+	defer func() { Client = saved }()
+
 	Client = &mocks.MockClient{}
 	mocks.GetDoFunc = func(req *http.Request) (*http.Response, error) {
 		data := ioutil.NopCloser(bytes.NewReader([]byte("")))

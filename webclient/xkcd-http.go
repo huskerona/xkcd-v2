@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
+	"xkcd2/tools/logger"
 )
 
 type HTTPClient interface {
@@ -26,9 +28,12 @@ func Get(url string) ([]byte, error) {
 
 	if err != nil {
 		return nil, fmt.Errorf("NewRequest: %v", err)
-
 	}
+
+	start := time.Now()
 	resp, err := Client.Do(req)
+	end := time.Since(start)
+	logger.Info(fmt.Sprintf("client.do(req) time: %d", end.Milliseconds()))
 
 	if err != nil {
 		return nil, fmt.Errorf("Get: %v", err)

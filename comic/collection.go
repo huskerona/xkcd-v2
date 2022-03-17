@@ -2,29 +2,42 @@ package comic
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 	"xkcd2/tools/logger"
 )
 
-type collection []*XKCD
-
-var (
+type Comics struct {
 	mu     sync.Mutex
-	Comics collection
-)
+	comics []XKCD
+}
+
+// Load will add comics to c. During the loading process the critical section is formed before looping over the comics.
+func (c *Comics) Load(items []XKCD) {
+	defer logger.Trace("func LoadComics")()
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.Len() == 0 {
+		for _, item := range items {
+			c.comics = append(c.comics, item)
+		}
+	}
+}
 
 // Add will insert xkcd into a collection of comics. Add uses a mutex to add an item
 // in order to prevent concurrent access to the collection.
-func (c collection) Add(xkcd *XKCD) {
+func (c *Comics) Add(xkcd *XKCD) {
 	defer logger.Trace("method Add()")()
 
-	mu.Lock()
-	defer mu.Unlock()
-	Comics = append(Comics, xkcd)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.comics = append(c.comics, *xkcd)
 }
 
 // Contains return true or false depending on whether it found a comicNum in the collection
-func (c collection) Contains(comicNum int) bool {
+func (c *Comics) Contains(comicNum int) bool {
 	defer logger.Trace("method Contains()")()
 
 	index, _ := c.Get(comicNum)
@@ -34,18 +47,18 @@ func (c collection) Contains(comicNum int) bool {
 }
 
 // Get returns a comic and the index where the comicNum was found. If a comic is not found, the return value is -1 for index and nil for XKCD type
-func (c collection) Get(comicNum int) (int, *XKCD) {
+func (c *Comics) Get(comicNum int) (int, *XKCD) {
 	defer logger.Trace("method Get()")()
 
 	index := -1
 	var xkcd *XKCD
 
-	mu.Lock()
-	defer mu.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
-	for i, item := range c {
+	for i, item := range c.comics {
 		if item.Number == comicNum {
-			index, xkcd = i, item
+			index, xkcd = i, &item
 			break
 		}
 	}
@@ -53,35 +66,49 @@ func (c collection) Get(comicNum int) (int, *XKCD) {
 	return index, xkcd
 }
 
+// GetAll returns the entire collection of Comics
+func (c *Comics) GetAll() []XKCD {
+	defer logger.Trace("func GetComics")()
+
+	return c.comics
+}
+
 // Index returns index number of a collection or -1 if not found. See Get func.
-func (c collection) Index(comicNum int) int {
+func (c *Comics) Index(comicNum int) int {
 	result, _ := c.Get(comicNum)
 
 	return result
 }
 
 // Remove drops an item from the collection based on its index
-func (c collection) Remove(index int) {
+func (c *Comics) Remove(index int) {
 	defer logger.Trace("method Remove()")()
 
-	if index == -1 || index > len(Comics) {
+	if index == -1 || index > len(c.comics) {
 		return
 	}
 
-	copy(c[index:], c[index+1:])
+	copy(c.comics[index:], c.comics[index+1:])
+}
+
+// Sort will sort the comics in ascending order based on the comic number
+func (c *Comics) Sort() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	sort.Sort(c)
 }
 
 // Len returns a len value of the collection slice. It is part of the sort packages Interface type.
-func (c collection) Len() int {
-	return len(c)
+func (c *Comics) Len() int {
+	return len(c.comics)
 }
 
 // Less compares i and j and returns bool if i is smaller than j.
-func (c collection) Less(i, j int) bool {
-	return c[i].Number < c[j].Number
+func (c *Comics) Less(i, j int) bool {
+	return c.comics[i].Number < c.comics[j].Number
 }
 
 // Swap replaces the position of two items in the collection
-func (c collection) Swap(i, j int) {
-	c[i], c[j] = c[j], c[i]
+func (c *Comics) Swap(i, j int) {
+	c.comics[i], c.comics[j] = c.comics[j], c.comics[i]
 }

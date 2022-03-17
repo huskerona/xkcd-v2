@@ -7,7 +7,7 @@ import (
 	"xkcd2/tools/logger"
 )
 
-//+ Type defs
+// XKCD struct that stores the data returned from the JSON document from the xkcd website.
 type XKCD struct {
 	Day        string `json:"day"`
 	Month      string `json:"month"`
@@ -40,20 +40,20 @@ func (xkcd *XKCD) Download(comicNumber int) error {
 		url = fmt.Sprintf("%s/%d/%s", config.HomeURL, comicNumber, config.JSONURL)
 	}
 
-	xkcd, err = fetch(url)
+	temp, err := fetch(url)
 
-	if err != nil {
-		return err
+	if temp != nil {
+		*xkcd = *temp
 	}
 
-	return nil
+	return err
 }
 
-// DownloadImage fetches an XKCD image from imageUrl.
+// DownloadImage fetches an XKCD image from imageURL.
 // NOTE: There are some comics whose image cannot be retrieved. It would require that we parse the HTML.
 // For that reason the error is ignored, but in any case, XKCD struct is returned while Image is left as empty string.
-func (xkcd *XKCD) DownloadImage(imageUrl string) error {
-	imageByte, err := downloadImage(imageUrl)
+func (xkcd *XKCD) DownloadImage(imageURL string) error {
+	imageByte, err := downloadImage(imageURL)
 
 	if err == nil {
 		xkcd.Image = imaging.EncodeToBase64(imageByte)
