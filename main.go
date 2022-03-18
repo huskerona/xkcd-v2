@@ -62,7 +62,7 @@ func main() {
 	}
 }
 
-// Initiates the syncing process of fetching the latest comic, fetch missing comics,
+// doSync initiates the syncing process of fetching the latest comic, fetch missing comics,
 // sorting the comics and writing them back to the offline index file.
 func doSync() {
 	lastComicChan = make(chan int)
@@ -86,11 +86,11 @@ func fetchComics(lastComicNum int) {
 	defer logger.Trace("fetchComics")()
 
 	// counting semaphore token that enforces the limit on the number of calls
-	// to the DownloadComic function.
+	// to the Download function.
 	semaphore := make(chan struct{}, 20)
 
 	for i := 1; i < lastComicNum; i++ {
-		if comicExists(i) {
+		if comics.Contains(i) {
 			continue
 		}
 
@@ -153,12 +153,6 @@ func getLatestComicNum() int {
 	lastComicChan <- result
 
 	return result
-}
-
-// Checks if the comic exists by sending the information to
-// the monitor goroutine and receives the feedback on the dupCheckChan channel.
-func comicExists(comicNum int) bool {
-	return comics.Contains(comicNum)
 }
 
 // monitor function monitors the channels and does something with the

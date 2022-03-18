@@ -13,14 +13,11 @@ type Comics struct {
 	sorted bool
 }
 
-// Load will add comics to c. During the loading process the critical section is formed before looping over the comics.
-// When the data is loaded, an assumption is made that the items are sorted, therefore, prior to writing the comics
-// to the disk, make sure to call Sort() method.
+// Load adds a list of XKCD objects to the internal collection.
+// When the data is loaded, an assumption is made that the items are sorted,
+// therefore, prior to writing the comics to the disk, make sure to call Sort() method.
 func (c *Comics) Load(items []XKCD) {
 	defer logger.Trace("func LoadComics")()
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
 
 	if c.Len() == 0 {
 		c.comics = make([]XKCD, 0, len(items))
