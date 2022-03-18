@@ -56,6 +56,24 @@ func TestComicsAdd(t *testing.T) {
 	}
 }
 
+func TestComicsAddUnordered(t *testing.T) {
+	c := Comics{}
+
+	var xkcd10 = &XKCD{Number: 10, Title: "Adding Title"}
+	var xkcd9 = &XKCD{Number: 9, Title: "Adding Title"}
+
+	c.sorted = true
+
+	c.Add(xkcd10)
+	c.Add(xkcd9)
+
+	got := c.sorted
+
+	if got {
+		t.Errorf("wanted sorted=false, got %t", got)
+	}
+}
+
 func TestComicsGet(t *testing.T) {
 	c := Comics{}
 	c.Load(setupComics(2000, false))

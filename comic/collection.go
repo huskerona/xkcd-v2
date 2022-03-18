@@ -16,6 +16,8 @@ type Comics struct {
 // Load adds a list of XKCD objects to the internal collection.
 // When the data is loaded, an assumption is made that the items are sorted,
 // therefore, prior to writing the comics to the disk, make sure to call Sort() method.
+// This method should not be run as a goroutine while crawling and calling Add() method
+// as it might change the state of the collection.
 func (c *Comics) Load(items []XKCD) {
 	defer logger.Trace("func LoadComics")()
 
@@ -35,7 +37,7 @@ func (c *Comics) Add(xkcd *XKCD) {
 	defer c.mu.Unlock()
 
 	size := c.Len()
-	if size > 0 && c.comics[size-1].Number > xkcd.Number {
+	if c.sorted && size > 0 && c.comics[size-1].Number > xkcd.Number {
 		c.sorted = false
 	}
 
