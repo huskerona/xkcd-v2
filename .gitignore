@@ -1,4 +1,4 @@
 .idea/
 xkcd
-**/c.out
-**/c.html
+**/*.out
+**/*.test

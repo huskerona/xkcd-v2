@@ -10,9 +10,12 @@ import (
 type Comics struct {
 	mu     sync.Mutex
 	comics []XKCD
+	sorted bool
 }
 
 // Load will add comics to c. During the loading process the critical section is formed before looping over the comics.
+// When the data is loaded, an assumption is made that the items are sorted, therefore, prior to writing the comics
+// to the disk, make sure to call Sort() method.
 func (c *Comics) Load(items []XKCD) {
 	defer logger.Trace("func LoadComics")()
 
@@ -20,9 +23,9 @@ func (c *Comics) Load(items []XKCD) {
 	defer c.mu.Unlock()
 
 	if c.Len() == 0 {
-		for _, item := range items {
-			c.comics = append(c.comics, item)
-		}
+		c.comics = make([]XKCD, 0, len(items))
+		c.comics = append(c.comics, items...)
+		c.sorted = true
 	}
 }
 
@@ -33,6 +36,12 @@ func (c *Comics) Add(xkcd *XKCD) {
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	size := c.Len()
+	if size > 0 && c.comics[size-1].Number > xkcd.Number {
+		c.sorted = false
+	}
+
 	c.comics = append(c.comics, *xkcd)
 }
 
@@ -50,17 +59,16 @@ func (c *Comics) Contains(comicNum int) bool {
 func (c *Comics) Get(comicNum int) (int, *XKCD) {
 	defer logger.Trace("method Get()")()
 
-	index := -1
-	var xkcd *XKCD
-
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	for i, item := range c.comics {
-		if item.Number == comicNum {
-			index, xkcd = i, &item
-			break
-		}
+	index := -1
+	var xkcd *XKCD
+
+	if c.sorted {
+		index, xkcd = c.getBinarySearch(0, len(c.comics)-1, comicNum)
+	} else {
+		index, xkcd = c.getSequentialSearch(comicNum)
 	}
 
 	return index, xkcd
@@ -81,14 +89,17 @@ func (c *Comics) Index(comicNum int) int {
 }
 
 // Remove drops an item from the collection based on its index
-func (c *Comics) Remove(index int) {
+func (c *Comics) Remove(index int) bool {
 	defer logger.Trace("method Remove()")()
 
-	if index == -1 || index > len(c.comics) {
-		return
+	if index == -1 || index >= len(c.comics) {
+		return false
 	}
 
 	copy(c.comics[index:], c.comics[index+1:])
+	c.comics = c.comics[:len(c.comics)-1]
+
+	return true
 }
 
 // Sort will sort the comics in ascending order based on the comic number
@@ -96,6 +107,7 @@ func (c *Comics) Sort() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	sort.Sort(c)
+	c.sorted = true
 }
 
 // Len returns a len value of the collection slice. It is part of the sort packages Interface type.
